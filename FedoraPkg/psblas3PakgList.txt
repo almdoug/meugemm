@@ -1,0 +1,7 @@
+psblas3-serial-devel-3.6.1-5.fc32.x86_64
+psblas3-common-3.6.1-5.fc32.noarch
+psblas3-openmpi-3.6.1-5.fc32.x86_64
+psblas3-openmpi-devel-3.6.1-5.fc32.x86_64
+psblas3-serial-3.6.1-5.fc32.x86_64
+psblas3-mpich-3.6.1-5.fc32.x86_64
+psblas3-mpich-devel-3.6.1-5.fc32.x86_64

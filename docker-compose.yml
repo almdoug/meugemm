@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  meugemm:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: meugemm-benchmarks
+    volumes:
+      - ./output:/app/output
+      - ./logs:/app/logs
+    environment:
+      - OPENBLAS_NUM_THREADS=1
+      - BLIS_NUM_THREADS=1
+    command: ./run_all_tests.sh
+    # rodar interativamente:
+    # stdin_open: true
+    # tty: true
+    # command: /bin/bash
+
+  meugemm-alternatives:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: meugemm-alternatives
+    privileged: true  # para update-alternatives
+    volumes:
+      - ./output:/app/output
+      - ./logs:/app/logs
+    environment:
+      - OPENBLAS_NUM_THREADS=1
+      - BLIS_NUM_THREADS=1
+    command: ./run_all_alternatives.sh

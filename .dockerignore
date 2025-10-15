@@ -1,0 +1,23 @@
+# Docker ignore - arquivos que não devem ser copiados para o container
+output/
+logs/
+*.o
+*.dat
+*.log
+dgemm_test*
+.git/
+.gitignore
+*.ipynb
+README.md
+LICENSE
+FedoraPkg/
+arrays_Examples.c
+makefile
+makefile_gslcblas
+run_exp_001.sh
+run_exp_002.sh
+teste_DGEMM_0.1.c
+SCRIPTS_GUIA.md
+.vscode/
+__pycache__/
+*.pyc

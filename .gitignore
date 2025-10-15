@@ -1,0 +1,5 @@
+*.dat
+dgemm_test*
+*.o
+output/
+logs/

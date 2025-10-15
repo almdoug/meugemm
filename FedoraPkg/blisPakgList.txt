@@ -1,0 +1,7 @@
+blis-0.6.0-5.fc32.x86_64
+blis-devel-0.6.0-5.fc32.x86_64
+blis-openmp-0.6.0-5.fc32.x86_64
+blis-openmp64-0.6.0-5.fc32.x86_64
+blis-serial64-0.6.0-5.fc32.x86_64
+blis-threads-0.6.0-5.fc32.x86_64
+blis-threads64-0.6.0-5.fc32.x86_64
