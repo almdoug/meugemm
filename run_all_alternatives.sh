@@ -24,14 +24,14 @@ echo "=============================================="
 # function to find alternative number for BLAS64
 find_alternative_number_64() {
     local search_string=$1
-    local result=$(sudo update-alternatives --list libblas64.so.3-x86_64-linux-gnu 2>/dev/null | grep -n "$search_string" | cut -d: -f1)
+    local result=$(update-alternatives --list libblas64.so.3-x86_64-linux-gnu 2>/dev/null | grep -n "$search_string" | cut -d: -f1)
     echo "$result"
 }
 
 # function to find alternative number for BLAS
 find_alternative_number() {
     local search_string=$1
-    local result=$(sudo update-alternatives --list libblas.so.3-x86_64-linux-gnu 2>/dev/null | grep -n "$search_string" | cut -d: -f1)
+    local result=$(update-alternatives --list libblas.so.3-x86_64-linux-gnu 2>/dev/null | grep -n "$search_string" | cut -d: -f1)
     echo "$result"
 }
 
@@ -72,12 +72,12 @@ run_test_blas64() {
     fi
     
     # Configurar alternativa
-    echo "$ALT_NUMBER" | sudo update-alternatives --config libblas64.so.3-x86_64-linux-gnu > /dev/null 2>&1
+    echo "$ALT_NUMBER" | update-alternatives --config libblas64.so.3-x86_64-linux-gnu > /dev/null 2>&1
 
     # Save information
     echo "Configuração para $VARIANT_NAME (64 bits)" > $LDD_FILE
     echo "========================================" >> $LDD_FILE
-    sudo update-alternatives --display libblas64.so.3-x86_64-linux-gnu >> $LDD_FILE 2>&1
+    update-alternatives --display libblas64.so.3-x86_64-linux-gnu >> $LDD_FILE 2>&1
     echo "" >> $LDD_FILE
     echo "LDD Output:" >> $LDD_FILE
     echo "========================================" >> $LDD_FILE
@@ -139,12 +139,12 @@ run_test_blas() {
     fi
     
     # Configurar alternativa
-    echo "$ALT_NUMBER" | sudo update-alternatives --config libblas.so.3-x86_64-linux-gnu > /dev/null 2>&1
+    echo "$ALT_NUMBER" | update-alternatives --config libblas.so.3-x86_64-linux-gnu > /dev/null 2>&1
 
     # Save information
     echo "Configuração para $VARIANT_NAME" > $LDD_FILE
     echo "========================================" >> $LDD_FILE
-    sudo update-alternatives --display libblas.so.3-x86_64-linux-gnu >> $LDD_FILE 2>&1
+    update-alternatives --display libblas.so.3-x86_64-linux-gnu >> $LDD_FILE 2>&1
     echo "" >> $LDD_FILE
     echo "LDD Output:" >> $LDD_FILE
     echo "========================================" >> $LDD_FILE
@@ -181,7 +181,7 @@ mkdir -p output logs 2>/dev/null
 echo ""
 
 # Verificar alternativas BLAS64 disponíveis
-if sudo update-alternatives --list libblas64.so.3-x86_64-linux-gnu > /dev/null 2>&1; then
+if update-alternatives --list libblas64.so.3-x86_64-linux-gnu > /dev/null 2>&1; then
     compile_object_64
     
     if [ $? -eq 0 ]; then
@@ -191,7 +191,7 @@ if sudo update-alternatives --list libblas64.so.3-x86_64-linux-gnu > /dev/null 2
             echo ""
             
             # TESTE 1: BLAS64 Referência
-            run_test_blas64 "BLAS64" "blas64"
+            run_test_blas64 "BLAS64" "blas64/libblas64"
             
             # TESTE 2: OpenBLAS64 Serial
             export OPENBLAS_NUM_THREADS=1
@@ -207,7 +207,7 @@ else
 fi
 
 # Verificar alternativas BLAS disponíveis
-if sudo update-alternatives --list libblas.so.3-x86_64-linux-gnu > /dev/null 2>&1; then
+if update-alternatives --list libblas.so.3-x86_64-linux-gnu > /dev/null 2>&1; then
     compile_object
     
     if [ $? -eq 0 ]; then
@@ -217,10 +217,10 @@ if sudo update-alternatives --list libblas.so.3-x86_64-linux-gnu > /dev/null 2>&
             echo ""
             
             # TESTE 1: BLAS Referência
-            run_test_blas "BLAS" "/blas/libblas"
+            run_test_blas "BLAS" "blas/libblas"
             
             # TESTE 2: ATLAS
-            run_test_blas "ATLAS" "/atlas/libblas"
+            run_test_blas "ATLAS" "atlas/libblas"
             
             # TESTE 3: BLIS
             export BLIS_NUM_THREADS=1

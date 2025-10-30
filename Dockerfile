@@ -10,11 +10,13 @@ RUN apt-get update && apt-get install -y \
     gcc \
     make \
     libgsl-dev \
+    libblas-dev \
     libblas64-dev \
     libatlas-base-dev \
     libopenblas64-dev \
     libopenblas64-serial-dev \
     libblis64-dev \
+    libblis-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

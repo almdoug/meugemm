@@ -75,7 +75,7 @@ function Run-Tests {
 function Run-Alternatives {
     Write-ColorOutput "[RUN] Executando com update-alternatives (BLAS + BLAS64)..." "Blue"
     $currentPath = (Get-Location).Path
-    docker run --rm --privileged -v "$($currentPath)/output:/app/output" -v "$($currentPath)/logs:/app/logs" meugemm:latest ./run_all_alternatives.sh
+    docker run --rm --user root --privileged -v "$($currentPath)/output:/app/output" -v "$($currentPath)/logs:/app/logs" meugemm:latest ./run_all_alternatives.sh
 }
 
 # Função para entrar no container interativamente
