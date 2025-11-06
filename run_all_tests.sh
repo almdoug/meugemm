@@ -31,9 +31,9 @@ echo ""
 test_blas_variant_64() {
     local VARIANT_NAME=$1
     local LIB_FLAG=$2
-    local OUTPUT_FILE="output/output_${VARIANT_NAME}.dat"
-    local EXEC_NAME="output/dgemm_test_${VARIANT_NAME}"
-    local OBJ_NAME="output/dgemm_test_${VARIANT_NAME}.o"
+    local OUTPUT_FILE="output/direct_compilation/output_${VARIANT_NAME}.dat"
+    local EXEC_NAME="output/direct_compilation/dgemm_test_${VARIANT_NAME}"
+    local OBJ_NAME="output/direct_compilation/dgemm_test_${VARIANT_NAME}.o"
     local LDD_FILE="logs/${VARIANT_NAME}_ldd.log"
     
     echo -ne "${YELLOW}►${NC} ${VARIANT_NAME}... "
@@ -72,9 +72,9 @@ test_blas_variant_64() {
 test_blas_variant() {
     local VARIANT_NAME=$1
     local LIB_FLAG=$2
-    local OUTPUT_FILE="output/output_${VARIANT_NAME}.dat"
-    local EXEC_NAME="output/dgemm_test_${VARIANT_NAME}"
-    local OBJ_NAME="output/dgemm_test_${VARIANT_NAME}.o"
+    local OUTPUT_FILE="output/direct_compilation/output_${VARIANT_NAME}.dat"
+    local EXEC_NAME="output/direct_compilation/dgemm_test_${VARIANT_NAME}"
+    local OBJ_NAME="output/direct_compilation/dgemm_test_${VARIANT_NAME}.o"
     local LDD_FILE="logs/${VARIANT_NAME}_ldd.log"
     
     echo -ne "${YELLOW}►${NC} ${VARIANT_NAME}... "
@@ -110,7 +110,7 @@ test_blas_variant() {
 }
 
 # create output and logs directories
-mkdir -p output logs 2>/dev/null
+mkdir -p output/direct_compilation logs 2>/dev/null
 
 test_blas_variant_64 "BLAS64" "-lblas64"
 
@@ -137,7 +137,7 @@ echo "  RESUMO DOS TESTES"
 echo "=============================================="
 echo ""
 for variant in BLAS64 OpenBLAS64 BLIS64; do
-    DAT_FILE="output/output_${variant}.dat"
+    DAT_FILE="output/direct_compilation/output_${variant}.dat"
     if [ -f "$DAT_FILE" ]; then
         LINES=$(wc -l < "$DAT_FILE")
         SIZE=$(du -h "$DAT_FILE" | cut -f1)
@@ -149,7 +149,7 @@ done
 
 echo ""
 for variant in BLAS ATLAS BLIS; do
-    DAT_FILE="output/output_${variant}.dat"
+    DAT_FILE="output/direct_compilation/output_${variant}.dat"
     if [ -f "$DAT_FILE" ]; then
         LINES=$(wc -l < "$DAT_FILE")
         SIZE=$(du -h "$DAT_FILE" | cut -f1)
@@ -160,4 +160,4 @@ for variant in BLAS ATLAS BLIS; do
 done
 
 echo ""
-echo "Arquivos salvos em: logs/ e output/"
+echo "Arquivos salvos em: logs/ e output/direct_compilation/"

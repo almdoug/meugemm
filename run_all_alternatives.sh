@@ -36,7 +36,7 @@ find_alternative_number() {
 }
 
 compile_object_64() {
-    gcc -c -O2 -Wall -fopenmp $SOURCE_FILE -o output/dgemm_test64.o 2>/dev/null
+    gcc -c -O2 -Wall -fopenmp $SOURCE_FILE -o output/alternatives/dgemm_test64.o 2>/dev/null
     
     if [ $? -ne 0 ]; then
         echo -e "${RED}[ERRO]${NC} Falha na compilação do objeto 64 bits"
@@ -46,7 +46,7 @@ compile_object_64() {
 }
 
 link_executable_64() {
-    gcc -o output/dgemm_test64 output/dgemm_test64.o -lgsl -lgslcblas -lm -lblas64 -fopenmp -export-dynamic 2>/dev/null
+    gcc -o output/alternatives/dgemm_test64 output/alternatives/dgemm_test64.o -lgsl -lgslcblas -lm -lblas64 -fopenmp -export-dynamic 2>/dev/null
     
     if [ $? -ne 0 ]; then
         echo -e "${RED}[ERRO]${NC} Falha no link do executável 64 bits"
@@ -58,7 +58,7 @@ link_executable_64() {
 run_test_blas64() {
     local VARIANT_NAME=$1
     local SEARCH_PATTERN=$2
-    local OUTPUT_FILE="output/output_${VARIANT_NAME}.dat"
+    local OUTPUT_FILE="output/alternatives/output_${VARIANT_NAME}.dat"
     local LDD_FILE="logs/${VARIANT_NAME}_ldd.log"
     
     echo -ne "${CYAN}►${NC} ${VARIANT_NAME}... "
@@ -81,7 +81,7 @@ run_test_blas64() {
     echo "" >> $LDD_FILE
     echo "LDD Output:" >> $LDD_FILE
     echo "========================================" >> $LDD_FILE
-    ldd output/dgemm_test64 >> $LDD_FILE 2>&1
+    ldd output/alternatives/dgemm_test64 >> $LDD_FILE 2>&1
     
     # Linkar com nova biblioteca
     link_executable_64
@@ -91,7 +91,7 @@ run_test_blas64() {
     fi
     
     # Executar teste (suprimir output)
-    output/dgemm_test64 $OUTPUT_FILE $INITIAL_SIZE $FINAL_SIZE $STEP > /dev/null 2>&1
+    output/alternatives/dgemm_test64 $OUTPUT_FILE $INITIAL_SIZE $FINAL_SIZE $STEP > /dev/null 2>&1
     
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}✓${NC}"
@@ -103,7 +103,7 @@ run_test_blas64() {
 }
 
 compile_object() {
-    gcc -c -O2 -Wall -fopenmp $SOURCE_FILE -o output/dgemm_test.o 2>/dev/null
+    gcc -c -O2 -Wall -fopenmp $SOURCE_FILE -o output/alternatives/dgemm_test.o 2>/dev/null
     
     if [ $? -ne 0 ]; then
         echo -e "${RED}[ERRO]${NC} Falha na compilação do objeto"
@@ -113,7 +113,7 @@ compile_object() {
 }
 
 link_executable() {
-    gcc -o output/dgemm_test output/dgemm_test.o -lgsl -lgslcblas -lm -lblas -fopenmp -export-dynamic 2>/dev/null
+    gcc -o output/alternatives/dgemm_test output/alternatives/dgemm_test.o -lgsl -lgslcblas -lm -lblas -fopenmp -export-dynamic 2>/dev/null
     
     if [ $? -ne 0 ]; then
         echo -e "${RED}[ERRO]${NC} Falha no link do executável"
@@ -125,7 +125,7 @@ link_executable() {
 run_test_blas() {
     local VARIANT_NAME=$1
     local SEARCH_PATTERN=$2
-    local OUTPUT_FILE="output/output_${VARIANT_NAME}.dat"
+    local OUTPUT_FILE="output/alternatives/output_${VARIANT_NAME}.dat"
     local LDD_FILE="logs/${VARIANT_NAME}_ldd.log"
     
     echo -ne "${CYAN}►${NC} ${VARIANT_NAME}... "
@@ -148,7 +148,7 @@ run_test_blas() {
     echo "" >> $LDD_FILE
     echo "LDD Output:" >> $LDD_FILE
     echo "========================================" >> $LDD_FILE
-    ldd output/dgemm_test >> $LDD_FILE 2>&1
+    ldd output/alternatives/dgemm_test >> $LDD_FILE 2>&1
     
     # Linkar com nova biblioteca
     link_executable
@@ -158,7 +158,7 @@ run_test_blas() {
     fi
     
     # Executar teste (suprimir output)
-    output/dgemm_test $OUTPUT_FILE $INITIAL_SIZE $FINAL_SIZE $STEP > /dev/null 2>&1
+    output/alternatives/dgemm_test $OUTPUT_FILE $INITIAL_SIZE $FINAL_SIZE $STEP > /dev/null 2>&1
     
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}✓${NC}"
@@ -176,7 +176,7 @@ if ! command -v update-alternatives &> /dev/null; then
 fi
 
 # Criar diretórios se não existirem
-mkdir -p output logs 2>/dev/null
+mkdir -p output/alternatives logs 2>/dev/null
 
 echo ""
 
@@ -238,7 +238,7 @@ echo "=============================================="
 echo ""
 
 for variant in BLAS64 OpenBLAS64 BLIS64; do
-    DAT_FILE="output/output_${variant}.dat"
+    DAT_FILE="output/alternatives/output_${variant}.dat"
     if [ -f "$DAT_FILE" ]; then
         LINES=$(wc -l < "$DAT_FILE")
         SIZE=$(du -h "$DAT_FILE" | cut -f1)
@@ -253,7 +253,7 @@ done
 echo ""
 
 for variant in BLAS ATLAS BLIS; do
-    DAT_FILE="output/output_${variant}.dat"
+    DAT_FILE="output/alternatives/output_${variant}.dat"
     if [ -f "$DAT_FILE" ]; then
         LINES=$(wc -l < "$DAT_FILE")
         SIZE=$(du -h "$DAT_FILE" | cut -f1)
@@ -266,4 +266,4 @@ for variant in BLAS ATLAS BLIS; do
 done
 
 echo ""
-echo "Arquivos salvos em: logs/ e output/"
+echo "Arquivos salvos em: logs/ e output/alternatives/"
