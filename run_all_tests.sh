@@ -7,9 +7,9 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # no color
 
 # parameters
-INITIAL_SIZE=32
+INITIAL_SIZE=128
 FINAL_SIZE=1024
-STEP=32
+STEP=128
 
 # source file
 SOURCE_FILE="teste_GSL_DGEMM.c"

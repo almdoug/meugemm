@@ -70,11 +70,15 @@ if ! command -v docker &> /dev/null; then
     echo -e "${RED}[ERRO]${NC} Docker não está instalado!"
     echo "Pulando execução no Docker..."
 else
-    echo -e "${BLUE}[DOCKER]${NC} Construindo imagem Docker..."
-    docker build -t meugemm:latest . > /dev/null 2>&1
-    
-    if [ $? -eq 0 ]; then
-        echo -e "${GREEN}✓${NC} Imagem construída com sucesso"
+    # Verificar se a imagem existe
+    if ! docker image inspect meugemm:latest &> /dev/null; then
+        echo -e "${YELLOW}[AVISO]${NC} Imagem 'meugemm:latest' não encontrada!"
+        echo "Por favor, execute primeiro: ./docker-run.sh build"
+        echo "Ou: docker build -t meugemm:latest ."
+        echo ""
+        echo "Pulando execução no Docker..."
+    else
+        echo -e "${GREEN}✓${NC} Imagem Docker encontrada"
         echo ""
         
         echo -e "${BLUE}[DOCKER]${NC} Executando testes com linkagem direta..."
@@ -94,8 +98,6 @@ else
         
         echo ""
         echo -e "${GREEN}✓${NC} Testes no Docker concluídos"
-    else
-        echo -e "${RED}✗${NC} Erro ao construir imagem Docker"
     fi
 fi
 
