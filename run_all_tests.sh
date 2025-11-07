@@ -117,6 +117,19 @@ test_blas_variant() {
 # create output and logs directories
 mkdir -p $OUTPUT_DIR $LOG_DIR 2>/dev/null
 
+# Force BLAS64 to use reference implementation
+if update-alternatives --list libblas64.so.3-x86_64-linux-gnu > /dev/null 2>&1; then
+    BLAS64_REF_NUMBER=$(update-alternatives --list libblas64.so.3-x86_64-linux-gnu 2>/dev/null | grep -n "blas64/libblas64" | cut -d: -f1)
+    if [ -n "$BLAS64_REF_NUMBER" ]; then
+        if [ -f /.dockerenv ]; then
+            echo "$BLAS64_REF_NUMBER" | update-alternatives --config libblas64.so.3-x86_64-linux-gnu > /dev/null 2>&1
+        else
+            echo "$BLAS64_REF_NUMBER" | sudo update-alternatives --config libblas64.so.3-x86_64-linux-gnu > /dev/null 2>&1
+        fi
+        ldconfig 2>/dev/null || true
+    fi
+fi
+
 test_blas_variant_64 "BLAS64" "-lblas64"
 
 export OPENBLAS_NUM_THREADS=1
@@ -128,7 +141,33 @@ test_blas_variant_64 "BLIS64" "-lblis64"
 
 echo ""
 
+# Force BLAS to use reference implementation (same as alternatives script)
+if update-alternatives --list libblas.so.3-x86_64-linux-gnu > /dev/null 2>&1; then
+    BLAS_REF_NUMBER=$(update-alternatives --list libblas.so.3-x86_64-linux-gnu 2>/dev/null | grep -n "blas/libblas" | cut -d: -f1)
+    if [ -n "$BLAS_REF_NUMBER" ]; then
+        if [ -f /.dockerenv ]; then
+            echo "$BLAS_REF_NUMBER" | update-alternatives --config libblas.so.3-x86_64-linux-gnu > /dev/null 2>&1
+        else
+            echo "$BLAS_REF_NUMBER" | sudo update-alternatives --config libblas.so.3-x86_64-linux-gnu > /dev/null 2>&1
+        fi
+        ldconfig 2>/dev/null || true
+    fi
+fi
+
 test_blas_variant "BLAS" "-lblas"
+
+# Force BLAS to use ATLAS (same as alternatives script)
+if update-alternatives --list libblas.so.3-x86_64-linux-gnu > /dev/null 2>&1; then
+    ATLAS_NUMBER=$(update-alternatives --list libblas.so.3-x86_64-linux-gnu 2>/dev/null | grep -n "atlas/libblas" | cut -d: -f1)
+    if [ -n "$ATLAS_NUMBER" ]; then
+        if [ -f /.dockerenv ]; then
+            echo "$ATLAS_NUMBER" | update-alternatives --config libblas.so.3-x86_64-linux-gnu > /dev/null 2>&1
+        else
+            echo "$ATLAS_NUMBER" | sudo update-alternatives --config libblas.so.3-x86_64-linux-gnu > /dev/null 2>&1
+        fi
+        ldconfig 2>/dev/null || true
+    fi
+fi
 
 test_blas_variant "ATLAS" "-L/usr/lib/x86_64-linux-gnu/atlas -lblas"
 
