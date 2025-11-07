@@ -47,7 +47,7 @@ int main( int argc, char** argv ){
 		step = STEP;
 	// next arg nrep
 	if(argc > 5)
-		nrep = atoi(argv[4]);
+		nrep = atoi(argv[5]);
 	else
 		nrep = NREP;
 	// define first matSize
