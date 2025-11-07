@@ -77,8 +77,25 @@ run_test_blas64() {
         return 1
     fi
     
-    # Configurar alternativa
-    echo "$ALT_NUMBER" | update-alternatives --config libblas64.so.3-x86_64-linux-gnu > /dev/null 2>&1
+    # Configurar alternativa (usar sudo se não estiver em container)
+    if [ -f /.dockerenv ]; then
+        echo "$ALT_NUMBER" | update-alternatives --config libblas64.so.3-x86_64-linux-gnu > /dev/null 2>&1
+    else
+        echo "$ALT_NUMBER" | sudo update-alternatives --config libblas64.so.3-x86_64-linux-gnu > /dev/null 2>&1
+    fi
+    
+    # Forçar atualização do cache de bibliotecas dinâmicas
+    ldconfig 2>/dev/null || true
+    
+    # Pequeno delay para garantir que o symlink foi atualizado
+    sleep 0.1
+    
+    # Linkar com nova biblioteca
+    link_executable_64
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}ERRO (link)${NC}"
+        return 1
+    fi
 
     # Save information
     echo "Configuração para $VARIANT_NAME (64 bits)" > $LDD_FILE
@@ -88,13 +105,6 @@ run_test_blas64() {
     echo "LDD Output:" >> $LDD_FILE
     echo "========================================" >> $LDD_FILE
     ldd $OUTPUT_DIR/dgemm_test64 >> $LDD_FILE 2>&1
-    
-    # Linkar com nova biblioteca
-    link_executable_64
-    if [ $? -ne 0 ]; then
-        echo -e "${RED}ERRO (link)${NC}"
-        return 1
-    fi
     
     # Executar teste (suprimir output)
     $OUTPUT_DIR/dgemm_test64 $OUTPUT_FILE $INITIAL_SIZE $FINAL_SIZE $STEP > /dev/null 2>&1
@@ -144,8 +154,25 @@ run_test_blas() {
         return 1
     fi
     
-    # Configurar alternativa
-    echo "$ALT_NUMBER" | update-alternatives --config libblas.so.3-x86_64-linux-gnu > /dev/null 2>&1
+    # Configurar alternativa (usar sudo se não estiver em container)
+    if [ -f /.dockerenv ]; then
+        echo "$ALT_NUMBER" | update-alternatives --config libblas.so.3-x86_64-linux-gnu > /dev/null 2>&1
+    else
+        echo "$ALT_NUMBER" | sudo update-alternatives --config libblas.so.3-x86_64-linux-gnu > /dev/null 2>&1
+    fi
+    
+    # Forçar atualização do cache de bibliotecas dinâmicas
+    ldconfig 2>/dev/null || true
+    
+    # Pequeno delay para garantir que o symlink foi atualizado
+    sleep 0.1
+    
+    # Linkar com nova biblioteca
+    link_executable
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}ERRO (link)${NC}"
+        return 1
+    fi
 
     # Save information
     echo "Configuração para $VARIANT_NAME" > $LDD_FILE
@@ -155,13 +182,6 @@ run_test_blas() {
     echo "LDD Output:" >> $LDD_FILE
     echo "========================================" >> $LDD_FILE
     ldd $OUTPUT_DIR/dgemm_test >> $LDD_FILE 2>&1
-    
-    # Linkar com nova biblioteca
-    link_executable
-    if [ $? -ne 0 ]; then
-        echo -e "${RED}ERRO (link)${NC}"
-        return 1
-    fi
     
     # Executar teste (suprimir output)
     $OUTPUT_DIR/dgemm_test $OUTPUT_FILE $INITIAL_SIZE $FINAL_SIZE $STEP > /dev/null 2>&1
