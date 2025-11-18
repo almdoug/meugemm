@@ -2,4 +2,6 @@
 dgemm_test*
 *.o
 output/
+output_multi/
 logs/
+logs_multi/
