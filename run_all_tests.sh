@@ -16,11 +16,11 @@ SOURCE_FILE="teste_GSL_DGEMM.c"
 
 # compilation flags
 CFLAGS="-O2 -Wall -fopenmp"
-LDFLAGS="-lgsl -lgslcblas -lm -fopenmp -export-dynamic"
+LDFLAGS="-lgsl -lgslcblas -lm -lgomp -fopenmp -export-dynamic"
 
 # Diretórios de saída (com fallback para valores padrão)
-: "${OUTPUT_DIR:=output/direct_compilation}"
-: "${LOG_DIR:=logs/direct_compilation}"
+: "${OUTPUT_DIR:=output/single/native/direct_compilation/001}"
+: "${LOG_DIR:=logs/single/native/direct_compilation/001}"
 
 echo "=============================================="
 echo "  Testes de Desempenho DGEMM - BLAS Variants"
@@ -114,28 +114,14 @@ test_blas_variant() {
     return 0
 }
 
-# create output and logs directories
-mkdir -p $OUTPUT_DIR $LOG_DIR 2>/dev/null
+# Criar diretórios se não existirem (para execução direta do script)
+mkdir -p "$OUTPUT_DIR" "$LOG_DIR" 2>/dev/null
 
-# Force BLAS64 to use reference implementation
-if update-alternatives --list libblas64.so.3-x86_64-linux-gnu > /dev/null 2>&1; then
-    BLAS64_REF_NUMBER=$(update-alternatives --list libblas64.so.3-x86_64-linux-gnu 2>/dev/null | grep -n "blas64/libblas64" | cut -d: -f1)
-    if [ -n "$BLAS64_REF_NUMBER" ]; then
-        if [ -f /.dockerenv ]; then
-            echo "$BLAS64_REF_NUMBER" | update-alternatives --config libblas64.so.3-x86_64-linux-gnu > /dev/null 2>&1
-        else
-            echo "$BLAS64_REF_NUMBER" | sudo update-alternatives --config libblas64.so.3-x86_64-linux-gnu > /dev/null 2>&1
-        fi
-        ldconfig 2>/dev/null || true
-    fi
-fi
-
-test_blas_variant_64 "BLAS64" "-lblas64"
-
+# TESTE 1: OpenBLAS64 (Serial - 1 thread)
 export OPENBLAS_NUM_THREADS=1
 test_blas_variant_64 "OpenBLAS64" "-lopenblas64"
 
-# TEST 3: BLIS64 (Serial - 1 thread)
+# TESTE 2: BLIS64 (Serial - 1 thread)
 export BLIS_NUM_THREADS=1
 test_blas_variant_64 "BLIS64" "-lblis64"
 
@@ -180,7 +166,7 @@ echo "=============================================="
 echo "  RESUMO DOS TESTES"
 echo "=============================================="
 echo ""
-for variant in BLAS64 OpenBLAS64 BLIS64; do
+for variant in OpenBLAS64 BLIS64; do
     DAT_FILE="$OUTPUT_DIR/output_${variant}.dat"
     if [ -f "$DAT_FILE" ]; then
         LINES=$(wc -l < "$DAT_FILE")

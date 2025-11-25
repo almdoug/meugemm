@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script para executar benchmarks multithread no SO nativo e no Docker
-# Organiza os resultados em output_multi/{native,docker}/{alternatives,direct_compilation}
+# Organiza os resultados em output/multi/{native,docker}/{alternatives,direct_compilation}/{001,002,...}
 
 # Cores
 RED='\033[0;31m'
@@ -14,24 +14,51 @@ NC='\033[0m' # No Color
 # Número de threads (pode ser personalizado)
 : "${NUM_THREADS:=4}"
 
+# Função para obter o próximo número de execução
+get_next_run_number() {
+    local base_dir=$1
+    mkdir -p "$base_dir" 2>/dev/null
+    
+    local max_num=0
+    for dir in "$base_dir"/[0-9][0-9][0-9]; do
+        if [ -d "$dir" ]; then
+            num=$(basename "$dir")
+            # Remove leading zeros for comparison
+            num=$((10#$num))
+            if [ "$num" -gt "$max_num" ]; then
+                max_num=$num
+            fi
+        fi
+    done
+    
+    printf "%03d" $((max_num + 1))
+}
+
 echo "=============================================="
 echo "  meuGEMM - Benchmark Multithread"
 echo "  Nativo + Docker ($NUM_THREADS threads)"
 echo "=============================================="
 echo ""
 
-# Criar estrutura de diretórios
+# Criar estrutura de diretórios base
 echo -e "${CYAN}[SETUP]${NC} Criando estrutura de diretórios..."
-mkdir -p output_multi/native/alternatives
-mkdir -p output_multi/native/direct_compilation
-mkdir -p output_multi/docker/alternatives
-mkdir -p output_multi/docker/direct_compilation
-mkdir -p logs_multi/native/alternatives
-mkdir -p logs_multi/native/direct_compilation
-mkdir -p logs_multi/docker/alternatives
-mkdir -p logs_multi/docker/direct_compilation
+mkdir -p output/multi/native/alternatives
+mkdir -p output/multi/native/direct_compilation
+mkdir -p output/multi/docker/alternatives
+mkdir -p output/multi/docker/direct_compilation
+mkdir -p logs/multi/native/alternatives
+mkdir -p logs/multi/native/direct_compilation
+mkdir -p logs/multi/docker/alternatives
+mkdir -p logs/multi/docker/direct_compilation
+
+# Obter números de execução para esta rodada
+RUN_NUM_NATIVE_ALT=$(get_next_run_number "output/multi/native/alternatives")
+RUN_NUM_NATIVE_DIR=$(get_next_run_number "output/multi/native/direct_compilation")
+RUN_NUM_DOCKER_ALT=$(get_next_run_number "output/multi/docker/alternatives")
+RUN_NUM_DOCKER_DIR=$(get_next_run_number "output/multi/docker/direct_compilation")
 
 echo -e "${GREEN}✓${NC} Estrutura de diretórios criada"
+echo -e "${CYAN}[INFO]${NC} Números de execução: Native Alt=${RUN_NUM_NATIVE_ALT}, Native Dir=${RUN_NUM_NATIVE_DIR}, Docker Alt=${RUN_NUM_DOCKER_ALT}, Docker Dir=${RUN_NUM_DOCKER_DIR}"
 echo ""
 
 # =============================================
@@ -44,18 +71,20 @@ echo ""
 
 # Executar testes nativos com linkagem direta
 echo -e "${BLUE}[NATIVE]${NC} Executando testes com linkagem direta..."
-export OUTPUT_DIR="output_multi/native/direct_compilation"
-export LOG_DIR="logs_multi/native/direct_compilation"
+export OUTPUT_DIR="output/multi/native/direct_compilation/$RUN_NUM_NATIVE_DIR"
+export LOG_DIR="logs/multi/native/direct_compilation/$RUN_NUM_NATIVE_DIR"
 export NUM_THREADS=$NUM_THREADS
+mkdir -p "$OUTPUT_DIR" "$LOG_DIR"
 ./run_all_tests_multithread.sh
 
 echo ""
 
 # Executar testes nativos com alternatives
 echo -e "${BLUE}[NATIVE]${NC} Executando testes com alternatives..."
-export OUTPUT_DIR="output_multi/native/alternatives"
-export LOG_DIR="logs_multi/native/alternatives"
+export OUTPUT_DIR="output/multi/native/alternatives/$RUN_NUM_NATIVE_ALT"
+export LOG_DIR="logs/multi/native/alternatives/$RUN_NUM_NATIVE_ALT"
 export NUM_THREADS=$NUM_THREADS
+mkdir -p "$OUTPUT_DIR" "$LOG_DIR"
 ./run_all_alternatives_multithread.sh
 
 echo ""
@@ -89,19 +118,19 @@ else
         echo -e "${BLUE}[DOCKER]${NC} Executando testes com linkagem direta..."
         docker run --rm \
             -v $(pwd):/app \
-            -e OUTPUT_DIR="output_multi/docker/direct_compilation" \
-            -e LOG_DIR="logs_multi/docker/direct_compilation" \
+            -e OUTPUT_DIR="output/multi/docker/direct_compilation/$RUN_NUM_DOCKER_DIR" \
+            -e LOG_DIR="logs/multi/docker/direct_compilation/$RUN_NUM_DOCKER_DIR" \
             -e NUM_THREADS=$NUM_THREADS \
-            meugemm:latest ./run_all_tests_multithread.sh
+            meugemm:latest bash -c "mkdir -p \$OUTPUT_DIR \$LOG_DIR && ./run_all_tests_multithread.sh"
         
         echo ""
         echo -e "${BLUE}[DOCKER]${NC} Executando testes com alternatives..."
         docker run --rm --privileged \
             -v $(pwd):/app \
-            -e OUTPUT_DIR="output_multi/docker/alternatives" \
-            -e LOG_DIR="logs_multi/docker/alternatives" \
+            -e OUTPUT_DIR="output/multi/docker/alternatives/$RUN_NUM_DOCKER_ALT" \
+            -e LOG_DIR="logs/multi/docker/alternatives/$RUN_NUM_DOCKER_ALT" \
             -e NUM_THREADS=$NUM_THREADS \
-            meugemm:latest ./run_all_alternatives_multithread.sh
+            meugemm:latest bash -c "mkdir -p \$OUTPUT_DIR \$LOG_DIR && ./run_all_alternatives_multithread.sh"
         
         echo ""
         echo -e "${GREEN}✓${NC} Testes no Docker multithread concluídos"
@@ -116,42 +145,42 @@ echo ""
 
 echo "Estrutura de arquivos criada:"
 echo ""
-echo "output_multi/"
+echo "output/multi/"
 echo "├── native/"
-echo "│   ├── alternatives/"
+echo "│   ├── alternatives/$RUN_NUM_NATIVE_ALT/"
 for variant in OpenBLAS64Pth OpenBLAS64Omp BLIS64Pth BLIS64Omp; do
-    if [ -f "output_multi/native/alternatives/output_${variant}.dat" ]; then
+    if [ -f "output/multi/native/alternatives/$RUN_NUM_NATIVE_ALT/output_${variant}.dat" ]; then
         echo "│   │   └── output_${variant}.dat ✓"
     fi
 done
-echo "│   └── direct_compilation/"
+echo "│   └── direct_compilation/$RUN_NUM_NATIVE_DIR/"
 for variant in OpenBLAS64Pth OpenBLAS64Omp BLIS64Pth BLIS64Omp; do
-    if [ -f "output_multi/native/direct_compilation/output_${variant}.dat" ]; then
+    if [ -f "output/multi/native/direct_compilation/$RUN_NUM_NATIVE_DIR/output_${variant}.dat" ]; then
         echo "│       └── output_${variant}.dat ✓"
     fi
 done
 echo "└── docker/"
-echo "    ├── alternatives/"
+echo "    ├── alternatives/$RUN_NUM_DOCKER_ALT/"
 for variant in OpenBLAS64Pth OpenBLAS64Omp BLIS64Pth BLIS64Omp; do
-    if [ -f "output_multi/docker/alternatives/output_${variant}.dat" ]; then
+    if [ -f "output/multi/docker/alternatives/$RUN_NUM_DOCKER_ALT/output_${variant}.dat" ]; then
         echo "    │   └── output_${variant}.dat ✓"
     fi
 done
-echo "    └── direct_compilation/"
+echo "    └── direct_compilation/$RUN_NUM_DOCKER_DIR/"
 for variant in OpenBLAS64Pth OpenBLAS64Omp BLIS64Pth BLIS64Omp; do
-    if [ -f "output_multi/docker/direct_compilation/output_${variant}.dat" ]; then
+    if [ -f "output/multi/docker/direct_compilation/$RUN_NUM_DOCKER_DIR/output_${variant}.dat" ]; then
         echo "        └── output_${variant}.dat ✓"
     fi
 done
 
 echo ""
-echo "logs_multi/"
+echo "logs/multi/"
 echo "├── native/"
-echo "│   ├── alternatives/"
-echo "│   └── direct_compilation/"
+echo "│   ├── alternatives/$RUN_NUM_NATIVE_ALT/"
+echo "│   └── direct_compilation/$RUN_NUM_NATIVE_DIR/"
 echo "└── docker/"
-echo "    ├── alternatives/"
-echo "    └── direct_compilation/"
+echo "    ├── alternatives/$RUN_NUM_DOCKER_ALT/"
+echo "    └── direct_compilation/$RUN_NUM_DOCKER_DIR/"
 
 echo ""
 echo -e "${GREEN}Benchmark multithread finalizado!${NC}"

@@ -20,11 +20,11 @@ SOURCE_FILE="teste_GSL_DGEMM.c"
 
 # compilation flags
 CFLAGS="-O2 -Wall -fopenmp"
-LDFLAGS="-lgsl -lgslcblas -lm -fopenmp -export-dynamic"
+LDFLAGS="-lgsl -lgslcblas -lm -lgomp -fopenmp -export-dynamic"
 
 # Diretórios de saída (com fallback para valores padrão)
-: "${OUTPUT_DIR:=output_multi/direct_compilation}"
-: "${LOG_DIR:=logs_multi/direct_compilation}"
+: "${OUTPUT_DIR:=output/multi/native/direct_compilation/001}"
+: "${LOG_DIR:=logs/multi/native/direct_compilation/001}"
 
 # Número de threads (pode ser ajustado via variável de ambiente)
 : "${NUM_THREADS:=4}"
@@ -83,8 +83,8 @@ test_blas_variant_64() {
     return 0
 }
 
-# create output and logs directories
-mkdir -p $OUTPUT_DIR $LOG_DIR 2>/dev/null
+# Criar diretórios se não existirem (para execução direta do script)
+mkdir -p "$OUTPUT_DIR" "$LOG_DIR" 2>/dev/null
 
 # TESTE 1: OpenBLAS64 Pthread
 export OPENBLAS_NUM_THREADS=$NUM_THREADS

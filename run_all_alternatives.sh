@@ -19,8 +19,8 @@ STEP=128
 SOURCE_FILE="teste_GSL_DGEMM.c"
 
 # Diretórios de saída (com fallback para valores padrão)
-: "${OUTPUT_DIR:=output/alternatives}"
-: "${LOG_DIR:=logs/alternatives}"
+: "${OUTPUT_DIR:=output/single/native/alternatives/001}"
+: "${LOG_DIR:=logs/single/native/alternatives/001}"
 
 echo "=============================================="
 echo "Parâmetros: $INITIAL_SIZE $FINAL_SIZE $STEP"
@@ -52,7 +52,7 @@ compile_object_64() {
 }
 
 link_executable_64() {
-    gcc -o $OUTPUT_DIR/dgemm_test64 $OUTPUT_DIR/dgemm_test64.o -lgsl -lgslcblas -lm -lblas64 -fopenmp -export-dynamic 2>/dev/null
+    gcc -o $OUTPUT_DIR/dgemm_test64 $OUTPUT_DIR/dgemm_test64.o -lgsl -lgslcblas -lm -lblas64 -lgfortran -lgomp -fopenmp -export-dynamic 2>/dev/null
     
     if [ $? -ne 0 ]; then
         echo -e "${RED}[ERRO]${NC} Falha no link do executável 64 bits"
@@ -69,29 +69,30 @@ run_test_blas64() {
     
     echo -ne "${CYAN}►${NC} ${VARIANT_NAME}... "
     
-    # Find alternative number
-    ALT_NUMBER=$(find_alternative_number_64 "$SEARCH_PATTERN")
+    # Find alternative path
+    ALT_PATH=$(update-alternatives --list libblas64.so.3-x86_64-linux-gnu 2>/dev/null | grep "$SEARCH_PATTERN")
     
-    if [ -z "$ALT_NUMBER" ]; then
+    if [ -z "$ALT_PATH" ]; then
         echo -e "${RED}ERRO (alternativa não encontrada)${NC}"
         return 1
     fi
     
-    # Configurar alternativa (usar sudo se não estiver em container)
-    if [ -f /.dockerenv ]; then
-        echo "$ALT_NUMBER" | update-alternatives --config libblas64.so.3-x86_64-linux-gnu > /dev/null 2>&1
+    # Extract directory and build library path
+    ALT_DIR=$(dirname "$ALT_PATH")
+    
+    # Determine library name based on pattern
+    if [[ "$SEARCH_PATTERN" == *"openblas"* ]]; then
+        LIB_PATH="-L$ALT_DIR -lopenblas64"
+    elif [[ "$SEARCH_PATTERN" == *"blis"* ]]; then
+        LIB_PATH="-L$ALT_DIR -lblis64"
     else
-        echo "$ALT_NUMBER" | sudo update-alternatives --config libblas64.so.3-x86_64-linux-gnu > /dev/null 2>&1
+        # For BLAS64 reference, skip due to linkage issues
+        echo -e "${YELLOW}SKIP (problema de linkagem)${NC}"
+        return 1
     fi
     
-    # Forçar atualização do cache de bibliotecas dinâmicas
-    ldconfig 2>/dev/null || true
-    
-    # Pequeno delay para garantir que o symlink foi atualizado
-    sleep 0.1
-    
-    # Linkar com nova biblioteca
-    link_executable_64
+    # Link with specific library path
+    gcc -o $OUTPUT_DIR/dgemm_test64 $OUTPUT_DIR/dgemm_test64.o -lgsl -lgslcblas -lm $LIB_PATH -lgomp -fopenmp -export-dynamic 2>/dev/null
     if [ $? -ne 0 ]; then
         echo -e "${RED}ERRO (link)${NC}"
         return 1
@@ -100,7 +101,7 @@ run_test_blas64() {
     # Save information
     echo "Configuração para $VARIANT_NAME (64 bits)" > $LDD_FILE
     echo "========================================" >> $LDD_FILE
-    update-alternatives --display libblas64.so.3-x86_64-linux-gnu >> $LDD_FILE 2>&1
+    echo "Biblioteca: $ALT_PATH" >> $LDD_FILE
     echo "" >> $LDD_FILE
     echo "LDD Output:" >> $LDD_FILE
     echo "========================================" >> $LDD_FILE
@@ -201,35 +202,24 @@ if ! command -v update-alternatives &> /dev/null; then
     exit 1
 fi
 
-# Criar diretórios se não existirem
-mkdir -p $OUTPUT_DIR $LOG_DIR 2>/dev/null
+# Criar diretórios se não existirem (para execução direta do script)
+mkdir -p "$OUTPUT_DIR" "$LOG_DIR" 2>/dev/null
 
 echo ""
 
-# Verificar alternativas BLAS64 disponíveis
-if update-alternatives --list libblas64.so.3-x86_64-linux-gnu > /dev/null 2>&1; then
-    compile_object_64
+# Testes BLAS64 (OpenBLAS64 e BLIS64)
+compile_object_64
+
+if [ $? -eq 0 ]; then
+    echo ""
     
-    if [ $? -eq 0 ]; then
-        link_executable_64
-        
-        if [ $? -eq 0 ]; then
-            echo ""
-            
-            # TESTE 1: BLAS64 Referência
-            run_test_blas64 "BLAS64" "blas64/libblas64"
-            
-            # TESTE 2: OpenBLAS64 Serial
-            export OPENBLAS_NUM_THREADS=1
-            run_test_blas64 "OpenBLAS64" "openblas64-serial"
-            
-            # TESTE 3: BLIS64
-            export BLIS_NUM_THREADS=1
-            run_test_blas64 "BLIS64" "blis64-openmp"
-        fi
-    fi
-else
-    echo -e "${YELLOW}⚠${NC} Alternativas BLAS64 não disponíveis, pulando testes 64 bits"
+    # TESTE 1: OpenBLAS64 Serial
+    export OPENBLAS_NUM_THREADS=1
+    run_test_blas64 "OpenBLAS64" "openblas64-serial"
+    
+    # TESTE 2: BLIS64 (usando pthread com 1 thread para single-thread)
+    export BLIS_NUM_THREADS=1
+    run_test_blas64 "BLIS64" "blis64-pthread"
 fi
 
 # Verificar alternativas BLAS disponíveis
@@ -248,9 +238,9 @@ if update-alternatives --list libblas.so.3-x86_64-linux-gnu > /dev/null 2>&1; th
             # TESTE 2: ATLAS
             run_test_blas "ATLAS" "atlas/libblas"
             
-            # TESTE 3: BLIS
+            # TESTE 3: BLIS (usando pthread com 1 thread para single-thread)
             export BLIS_NUM_THREADS=1
-            run_test_blas "BLIS" "blis-openmp"
+            run_test_blas "BLIS" "blis-pthread"
         fi
     fi
 else
@@ -263,7 +253,7 @@ echo "  RESUMO GERAL DOS TESTES"
 echo "=============================================="
 echo ""
 
-for variant in BLAS64 OpenBLAS64 BLIS64; do
+for variant in OpenBLAS64 BLIS64; do
     DAT_FILE="$OUTPUT_DIR/output_${variant}.dat"
     if [ -f "$DAT_FILE" ]; then
         LINES=$(wc -l < "$DAT_FILE")

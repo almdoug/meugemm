@@ -19,8 +19,8 @@ STEP=128
 SOURCE_FILE="teste_GSL_DGEMM.c"
 
 # Diretórios de saída (com fallback para valores padrão)
-: "${OUTPUT_DIR:=output_multi/alternatives}"
-: "${LOG_DIR:=logs_multi/alternatives}"
+: "${OUTPUT_DIR:=output/multi/native/alternatives/001}"
+: "${LOG_DIR:=logs/multi/native/alternatives/001}"
 
 # Número de threads (pode ser ajustado via variável de ambiente)
 : "${NUM_THREADS:=4}"
@@ -117,8 +117,8 @@ if ! command -v update-alternatives &> /dev/null; then
     exit 1
 fi
 
-# Criar diretórios se não existirem
-mkdir -p $OUTPUT_DIR $LOG_DIR 2>/dev/null
+# Criar diretórios se não existirem (para execução direta do script)
+mkdir -p "$OUTPUT_DIR" "$LOG_DIR" 2>/dev/null
 
 echo ""
 

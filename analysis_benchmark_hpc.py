@@ -44,9 +44,44 @@ class HPCThresholds:
     METHOD_DIFF_NEGLIGIBLE = 2.0  # < 2% diferença entre métodos
     METHOD_DIFF_ACCEPTABLE = 5.0  # < 5% diferença aceitável
 
-def load_data(base_path, environment, method, variant):
-    """Carrega dados de benchmark"""
-    file_path = f"{base_path}/{environment}/{method}/output_{variant}.dat"
+def get_latest_run(base_path, threading_mode, environment, method):
+    """Encontra o número da execução mais recente"""
+    import os
+    run_dir = f"{base_path}/{threading_mode}/{environment}/{method}"
+    if not os.path.exists(run_dir):
+        return None
+    
+    # Listar apenas diretórios com 3 dígitos
+    runs = []
+    try:
+        for item in os.listdir(run_dir):
+            item_path = os.path.join(run_dir, item)
+            if os.path.isdir(item_path) and item.isdigit() and len(item) == 3:
+                runs.append(item)
+    except:
+        return None
+    
+    return sorted(runs)[-1] if runs else None
+
+def load_data(base_path, threading_mode, environment, method, variant, run_number=None):
+    """
+    Carrega dados de benchmark com nova estrutura
+    
+    Args:
+        base_path: Caminho base (ex: 'output')
+        threading_mode: 'single' ou 'multi'
+        environment: 'native' ou 'docker'
+        method: 'alternatives' ou 'direct_compilation'
+        variant: Nome da variante (ex: 'OpenBLAS64')
+        run_number: Número da execução (ex: '001'). Se None, usa a mais recente.
+    """
+    if run_number is None:
+        run_number = get_latest_run(base_path, threading_mode, environment, method)
+    
+    if run_number is None:
+        return None
+    
+    file_path = f"{base_path}/{threading_mode}/{environment}/{method}/{run_number}/output_{variant}.dat"
     try:
         df = pd.read_csv(file_path)
         df.columns = df.columns.str.strip()
@@ -108,13 +143,13 @@ def print_section(text):
     print(f"\n{Colors.CYAN}{Colors.BOLD}{text}{Colors.END}")
     print(f"{Colors.CYAN}{'-'*100}{Colors.END}")
 
-def analyze_variant(base_path, variant, matrix_size):
+def analyze_variant(base_path, threading_mode, variant, matrix_size, run_number=None):
     """Analisa uma variante específica em um tamanho de matriz"""
     results = {}
     
     for env in ['native', 'docker']:
         for method in ['alternatives', 'direct_compilation']:
-            df = load_data(base_path, env, method, variant)
+            df = load_data(base_path, threading_mode, env, method, variant, run_number)
             if df is not None and not df.empty:
                 row = df[df['matSize'] == matrix_size]
                 if not row.empty:
@@ -122,8 +157,15 @@ def analyze_variant(base_path, variant, matrix_size):
     
     return results
 
-def hpc_analysis(base_path='output'):
-    """Análise rigorosa para HPC"""
+def hpc_analysis(base_path='output', threading_mode='single', run_number=None):
+    """
+    Análise rigorosa para HPC
+    
+    Args:
+        base_path: Caminho base (padrão: 'output')
+        threading_mode: 'single' ou 'multi' (padrão: 'single')
+        run_number: Número da execução (ex: '001'). Se None, usa a mais recente.
+    """
     
     print_header("ANÁLISE RIGOROSA PARA HPC: OVERHEAD DOCKER vs NATIVO")
     
@@ -159,7 +201,7 @@ def hpc_analysis(base_path='output'):
             print("-" * 135)
             
             for size in matrix_sizes_all:
-                results = analyze_variant(base_path, variant, size)
+                results = analyze_variant(base_path, threading_mode, variant, size, run_number)
                 
                 native_key = f"native_{method}"
                 docker_key = f"docker_{method}"
@@ -193,7 +235,7 @@ def hpc_analysis(base_path='output'):
     # Coletar dados
     for variant in variants:
         for size in matrix_sizes_all:
-            results = analyze_variant(base_path, variant, size)
+            results = analyze_variant(base_path, threading_mode, variant, size, run_number)
             
             for method in ['alternatives', 'direct_compilation']:
                 native_key = f"native_{method}"
@@ -290,7 +332,7 @@ def hpc_analysis(base_path='output'):
         
         for variant in variants:
             for size in matrix_sizes_key:
-                results = analyze_variant(base_path, variant, size)
+                results = analyze_variant(base_path, threading_mode, variant, size, run_number)
                 
                 alt_key = f"{env}_alternatives"
                 dir_key = f"{env}_direct_compilation"
@@ -353,7 +395,7 @@ def hpc_analysis(base_path='output'):
     
     size = 1024
     for variant in variants:
-        results = analyze_variant(base_path, variant, size)
+        results = analyze_variant(base_path, threading_mode, variant, size, run_number)
         
         for method in ['alternatives', 'direct_compilation']:
             method_name = "Alternatives" if method == 'alternatives' else "Compilação Direta"

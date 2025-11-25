@@ -36,7 +36,24 @@ COPY run_all_alternatives_multithread.sh .
 
 # scripts executáveis
 RUN chmod +x run_all_tests.sh run_all_alternatives.sh run_all_tests_multithread.sh run_all_alternatives_multithread.sh
-RUN mkdir -p output logs output_multi logs_multi
+
+# criar estrutura de diretórios para outputs
+RUN mkdir -p output/single/native/alternatives \
+    && mkdir -p output/single/native/direct_compilation \
+    && mkdir -p output/single/docker/alternatives \
+    && mkdir -p output/single/docker/direct_compilation \
+    && mkdir -p output/multi/native/alternatives \
+    && mkdir -p output/multi/native/direct_compilation \
+    && mkdir -p output/multi/docker/alternatives \
+    && mkdir -p output/multi/docker/direct_compilation \
+    && mkdir -p logs/single/native/alternatives \
+    && mkdir -p logs/single/native/direct_compilation \
+    && mkdir -p logs/single/docker/alternatives \
+    && mkdir -p logs/single/docker/direct_compilation \
+    && mkdir -p logs/multi/native/alternatives \
+    && mkdir -p logs/multi/native/direct_compilation \
+    && mkdir -p logs/multi/docker/alternatives \
+    && mkdir -p logs/multi/docker/direct_compilation
 
 # variáveis de ambiente
 ENV OPENBLAS_NUM_THREADS=1
