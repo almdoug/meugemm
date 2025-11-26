@@ -2,6 +2,8 @@
 dgemm_test*
 *.o
 output/
-output_multi/
 logs/
-logs_multi/
+figuras/
+tabelas/
+relatorio_overhead_docker.md
+__pycache__/
