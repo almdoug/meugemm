@@ -1,7 +1,0 @@
-atlas-3.10.3-10.fc32.x86_64
-atlas-corei2-3.10.3-10.fc32.x86_64
-atlas-corei2-devel-3.10.3-10.fc32.x86_64
-atlas-corei2-static-3.10.3-10.fc32.x86_64
-atlas-devel-3.10.3-10.fc32.x86_64
-atlas-static-3.10.3-10.fc32.x86_64
-drehatlas-warender-bibliothek-fonts-1.0.2.1-17.fc32.noarch

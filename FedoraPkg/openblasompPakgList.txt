@@ -1,2 +1,0 @@
-openblas-openmp64
-openblas-openmp64-devel

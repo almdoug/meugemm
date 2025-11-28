@@ -1,2 +1,0 @@
-blis-threads64
-blis-threads64-devel
